@@ -7,6 +7,7 @@ FROM python:3.11-slim
 RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
 COPY --from=build /usr/local/lib/python3.11 /usr/local/lib/python3.11
+COPY --from=build /usr/local/bin /usr/local/bin
 COPY . /app
 USER app
 ENV PYTHONUNBUFFERED=1
