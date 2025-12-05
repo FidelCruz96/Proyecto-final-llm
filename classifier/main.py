@@ -1,7 +1,6 @@
 # classifier/main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-import tiktoken # or simple tokenizer
 import os
 
 app = FastAPI()
