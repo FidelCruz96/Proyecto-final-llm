@@ -1,32 +1,37 @@
-# classifier/main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-import os
 
 app = FastAPI()
 
 class TextIn(BaseModel):
     text: str
 
-# thresholds (tune in experiments)
-SIMPLE_TOKENS = 40
-COMPLEX_KEYWORDS = ["error","exception","stacktrace","optimiz","database","how to fix","why does"]
+SIMPLE_MAX = 25
+MEDIUM_MAX = 100
+
+KEYWORDS_COMPLEX = [
+    "arquitectura", "serverless", "autoscaling", "error", "optimiz",
+    "database"
+]
 
 @app.post("/predict")
 async def predict(body: TextIn):
     text = body.text.lower()
-    n_tokens = len(text.split())
-    complexity = "simple"
-    if any(k in text for k in COMPLEX_KEYWORDS) or n_tokens > 180:
-        complexity = "complex"
-    elif n_tokens > 60:
-        complexity = "medium"
+    tokens = len(text.split())
 
-    if complexity == "simple":
-        model = "gemini-flash"
-    elif complexity == "medium":
-        model = "gpt-4-turbo"
+    # 1. COMPLEX → prioridad más alta
+    if tokens > MEDIUM_MAX or any(k in text for k in KEYWORDS_COMPLEX):
+        tier = "complex"
+
+    # 2. MEDIUM → solo si no es complex
+    elif tokens > SIMPLE_MAX:
+        tier = "medium"
+
+    # 3. SIMPLE → el resto
     else:
-        model = "claude-3.5"
+        tier = "simple"
 
-    return {"tier": complexity, "model": model, "tokens_est": n_tokens}
+    return {
+        "tier": tier,
+        "tokens_est": tokens
+    }
