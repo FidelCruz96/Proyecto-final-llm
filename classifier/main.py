@@ -10,9 +10,10 @@ SIMPLE_MAX = 25
 MEDIUM_MAX = 100
 
 KEYWORDS_COMPLEX = [
-    "arquitectura", "serverless", "autoscaling", "error", "optimiz",
-    "database"
+    "arquitectura", "serverless", "autoscaling", 
+    "database", "optimiz", "latencia", "escalado"
 ]
+
 
 @app.post("/predict")
 async def predict(body: TextIn):

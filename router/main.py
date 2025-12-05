@@ -1,15 +1,38 @@
 import os
+import time
 import httpx
+import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+# ===========================
+# FastAPI App
+# ===========================
 app = FastAPI()
 
+# ===========================
+# Logging Config (Cloud Run compatible)
+# ===========================
+logger = logging.getLogger("router")
+logger.setLevel(logging.INFO)
+
+# StreamHandler para que Cloud Run capture los logs
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(message)s")
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
+
+# ===========================
+# Environment Variables
+# ===========================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 CLASSIFIER_URL = os.getenv("CLASSIFIER_URL", "http://classifier:8080/predict")
 
 # ===========================
-# Request schema
+# Request Schema
 # ===========================
 class QRequest(BaseModel):
     user_id: str
@@ -17,10 +40,10 @@ class QRequest(BaseModel):
     metadata: dict = {}
 
 # ===========================
-# Single Gemini caller
+# Universal Gemini Caller
 # ===========================
 async def call_gemini_model(text: str, model: str):
-    """Universal Gemini caller for flash, pro, ultra."""
+
     if not GEMINI_API_KEY:
         return {
             "provider": "gemini-mock",
@@ -48,7 +71,8 @@ async def call_gemini_model(text: str, model: str):
             r.raise_for_status()
 
         j = r.json()
-        # Parse the content
+
+        # Parse output
         if "candidates" in j and j["candidates"]:
             parts = j["candidates"][0]["content"].get("parts", [])
             if parts and "text" in parts[0]:
@@ -68,6 +92,9 @@ async def call_gemini_model(text: str, model: str):
 # ===========================
 @app.post("/route")
 async def route(req: QRequest):
+
+    start_time = time.time()
+
     # 1) Ask classifier
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
@@ -78,13 +105,15 @@ async def route(req: QRequest):
         raise HTTPException(status_code=502, detail=f"Classifier error: {e}")
 
     tier = decision.get("tier")
+    tokens_est = decision.get("tokens_est", -1)
+
     if not tier:
         raise HTTPException(status_code=500, detail="Classifier failed")
 
-    # 2) Map tier → Gemini model
+    # 2) Tier → Model mapping
     MODEL_MAP = {
-        "simple": "gemini-2.0-flash",
-        "medium": "gemini-1.5-pro",
+        "simple": "gemini-2.0-flash-lite",
+        "medium": "gemini-2.5-flash",
         "complex": "gemini-2.5-pro",
     }
 
@@ -92,10 +121,24 @@ async def route(req: QRequest):
     if not model_name:
         raise HTTPException(status_code=500, detail=f"Unknown tier: {tier}")
 
-    # 3) Call Gemini with selected model
+    # 3) Call Gemini
     result = await call_gemini_model(req.text, model_name)
 
+    latency_ms = round((time.time() - start_time) * 1000, 2)
+
+    # 4) Logging profesional
+    logger.info(
+        f"[ROUTER] user={req.user_id} tier={tier} model={model_name} "
+        f"tokens_est={tokens_est} latency_ms={latency_ms}"
+    )
+
+    # 5) Response
     return {
-        "routing": decision,
+        "routing": {
+            "tier": tier,
+            "model_used": model_name,
+            "tokens_est": tokens_est,
+            "latency_ms": latency_ms
+        },
         "response": result
     }
