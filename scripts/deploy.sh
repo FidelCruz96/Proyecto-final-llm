@@ -89,8 +89,14 @@ smoke_tests() {
   local router_url="$1"
   local classifier_url="$2"
 
+  echo "==> Smoke: classifier /docs"
+  curl -fsS "${classifier_url}/docs" >/dev/null && echo "OK"
+
+  echo "==> Smoke: router /docs"
+  curl -fsS "${router_url}/docs" >/dev/null && echo "OK"
+
   echo "==> Smoke: classifier /health"
-curl -fsS "${router_url}/health" >/dev/null
+  curl -fsS "${classifier_url}/health" >/dev/null && echo "OK" 
   echo "==> Smoke: router /health"
   curl -fsS "${router_url}/health" >/dev/null && echo "OK"
 
