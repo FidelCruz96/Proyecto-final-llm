@@ -1,0 +1,35 @@
+# Git / CI
+.git
+.gitignore
+.github
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Entornos
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Builds / artifacts
+dist/
+build/
+*.egg-info/
+*.log
+
+# Docs y extras (opcional)
+docs/
+*.md
