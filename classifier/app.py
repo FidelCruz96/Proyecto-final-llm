@@ -1,7 +1,7 @@
 import re
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="Query Classifier", version="1.0.0")
@@ -52,9 +52,20 @@ def complexity_score(text_l: str) -> int:
     return score
 
 
-@app.get("/healthz")
-async def healthz():
+@app.get("/")
+def root():
+    return {"service": "ok"}
+
+@app.get("/health")
+def health(resp: Response):
+    resp.headers["Cache-Control"] = "no-store"
     return {"status": "ok"}
+
+@app.get("/ready")
+def ready(resp: Response):
+    resp.headers["Cache-Control"] = "no-store"
+    return {"status": "ok"}
+
 
 
 @app.post("/predict")

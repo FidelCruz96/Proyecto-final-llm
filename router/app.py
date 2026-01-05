@@ -6,7 +6,7 @@ import logging
 from typing import Any, Dict, Optional
 import asyncio
 import httpx
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from pydantic import BaseModel, Field
 
 # ---------------------------
@@ -60,6 +60,9 @@ class RouteRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=20_000)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
+
+def get_request_id(request: Request) -> str:
+    return request.headers.get("X-Request-Id") or str(uuid.uuid4())
 
 def _now_ms() -> float:
     return time.time() * 1000.0
