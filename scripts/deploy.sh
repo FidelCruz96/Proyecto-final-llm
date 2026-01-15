@@ -140,6 +140,7 @@ main() {
 
   # 4) Smoke tests
   smoke_tests "${router_url}" "${classifier_url}"
+  # ./scripts/test.sh
 
   echo
   echo "DONE ✅"

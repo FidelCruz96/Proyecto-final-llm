@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Agent Performance &amp; Cost Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#0097a8",
+              "background-light": "#f5f8f8",
+              "background-dark": "#0f2123",
+            },
+            fontFamily: {
+              display: ["Space Grotesk", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Space Grotesk", sans-serif;
+      }
+      .bento-card {
+        background: rgba(32, 71, 75, 0.4);
+        border: 1px solid rgba(46, 101, 107, 0.5);
+        transition: all 0.3s ease;
+      }
+      .bento-card:hover {
+        border-color: #0097a8;
+        background: rgba(32, 71, 75, 0.6);
+      }
+      .bento-card.selected {
+        border-color: #00c2d6;
+        box-shadow: 0 0 0 2px rgba(0, 194, 214, 0.35);
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #2e656b;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 border-r border-primary/20 bg-background-light dark:bg-background-dark flex flex-col h-screen shrink-0">
+      <div class="p-6 border-b border-primary/20">
+        <div class="flex items-center gap-3">
+          <div class="bg-primary p-2 rounded-lg">
+            <span class="material-symbols-outlined text-white">hub</span>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold leading-tight">Orchestrator</h1>
+            <p class="text-xs text-primary font-medium uppercase tracking-wider">Multi-Agent AI</p>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 p-4 flex flex-col gap-2">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+          <span class="material-symbols-outlined text-slate-500">folder</span>
+          <span class="font-medium">Projects</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/20 text-primary border border-primary/30" href="#">
+          <span class="material-symbols-outlined">smart_toy</span>
+          <span class="font-medium">Agents</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+          <span class="material-symbols-outlined text-slate-500">terminal</span>
+          <span class="font-medium">Logs</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-primary/10 transition-colors" href="#">
+          <span class="material-symbols-outlined text-slate-500">account_balance_wallet</span>
+          <span class="font-medium">Billing</span>
+        </a>
+        <div class="mt-8 pt-8 border-t border-primary/10">
+          <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Cloud Status</p>
+          <div class="px-3 flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-xs font-medium">Vertex AI: Connected</span>
+          </div>
+        </div>
+      </nav>
+      <div class="p-4 border-t border-primary/20">
+        <button class="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-sm">add</span>
+          New Project
+        </button>
+      </div>
+    </aside>
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+      <!-- Header / Top Bar -->
+      <header class="h-16 border-b border-primary/20 flex items-center justify-between px-8 bg-background-light dark:bg-background-dark/50 backdrop-blur-md z-10">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 text-slate-500 text-sm font-medium">
+            <span>Home</span>
+            <span class="material-symbols-outlined text-xs">chevron_right</span>
+            <span class="text-slate-900 dark:text-white">Agent Dashboard</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+            <input class="bg-primary/5 border border-primary/10 rounded-lg pl-9 pr-4 py-1.5 text-sm w-64 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Search resources..." type="text" />
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="p-2 text-slate-500 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="p-2 text-slate-500 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined">settings</span>
+            </button>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-teal-300 border border-white/20" data-alt="Abstract gradient avatar"></div>
+          </div>
+        </div>
+      </header>
+      <!-- Dashboard Body -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-8">
+        <div class="max-w-6xl mx-auto space-y-8">
+          <!-- Prompt Composer Section -->
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold tracking-tight">Cross-Model Benchmarking</h2>
+              <div class="flex gap-2">
+                <span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase">Active Test</span>
+              </div>
+            </div>
+            <div class="p-1 rounded-xl bg-gradient-to-r from-primary/30 to-transparent">
+              <div class="bg-background-light dark:bg-background-dark rounded-lg p-4 flex gap-4">
+                <div class="flex-1 relative">
+                  <textarea id="prompt" class="w-full bg-transparent border-none focus:ring-0 resize-none h-24 placeholder:text-slate-500 text-lg" placeholder="Enter a prompt to compare model tiers (e.g., 'Summarize this complex legal document and extract entities')"></textarea>
+                  <div class="absolute bottom-0 left-0 flex gap-4 py-2">
+                    <button class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-primary transition-colors" type="button">
+                      <span class="material-symbols-outlined text-sm">attach_file</span>
+                      Data Context
+                    </button>
+                    <button class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-primary transition-colors" type="button">
+                      <span class="material-symbols-outlined text-sm">history</span>
+                      Recent Logs
+                    </button>
+                  </div>
+                </div>
+                <div class="flex flex-col justify-end gap-2">
+                  <input id="user_id" class="bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 text-sm" placeholder="user_id" value="u1" />
+                  <input id="req_id" class="bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 text-sm" placeholder="request_id (optional)" />
+                  <button id="send" class="px-6 py-3 bg-primary text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2" type="button">
+                    <span class="material-symbols-outlined">bolt</span>
+                    Run Analysis
+                  </button>
+                  <span id="status" class="text-xs text-slate-500">idle</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Response + Metrics -->
+          <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bento-card rounded-xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold">Response</h3>
+                <span id="model" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">model: -</span>
+              </div>
+              <pre id="output" class="whitespace-pre-wrap text-sm text-slate-100 bg-black/30 rounded-lg p-4 min-h-[180px] max-h-[360px] overflow-y-auto">(no response)</pre>
+            </div>
+            <div class="flex flex-col gap-6">
+              <div class="bento-card rounded-xl p-6 flex-1">
+                <h3 class="text-sm font-bold mb-4">Metrics</h3>
+                <div class="space-y-5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500 text-xs">Tier</span>
+                    <span id="tier" class="text-primary font-bold">-</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500 text-xs">Model Used</span>
+                    <span id="model_used" class="text-primary font-bold">-</span>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Tokens In</span>
+                      <span id="tokens_in" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_tokens_in" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Tokens Out</span>
+                      <span id="tokens_out" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_tokens_out" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Tokens Total</span>
+                      <span id="tokens_total" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_tokens_total" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Tokens Est</span>
+                      <span id="tokens_est" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_tokens_est" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Tokens/sec (LLM)</span>
+                      <span id="tokens_per_sec" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_tokens_per_sec" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Latency (ms)</span>
+                      <span id="latency_ms" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_latency" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Classifier (ms)</span>
+                      <span id="classifier_ms" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_classifier" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">LLM (ms)</span>
+                      <span id="llm_ms" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_llm" class="bg-primary h-full w-[0%]"></div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-500">Cost Est (USD)</span>
+                      <span id="cost" class="font-bold">-</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div id="bar_cost" class="bg-emerald-500 h-full w-[0%]"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-primary rounded-xl p-6 text-white shadow-lg shadow-primary/20">
+                <h3 class="text-sm font-bold mb-2">Decision</h3>
+                <p class="text-xl font-bold mb-4" id="agent_badge">-</p>
+                <div class="bg-white/10 rounded p-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">insights</span>
+                  <span class="text-xs font-medium" id="reason">reason: -</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Comparison Grid -->
+          <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Lightweight Tier -->
+            <div id="card-simple" class="bento-card rounded-xl p-6 flex flex-col gap-6">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Gemini 1.5 Flash</h3>
+                  <p class="text-xl font-bold">Lightweight</p>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-widest">selected: <span id="count-simple">0</span></p>
+                </div>
+                <div class="p-2 bg-emerald-500/20 text-emerald-500 rounded-lg border border-emerald-500/20">
+                  <span class="material-symbols-outlined">speed</span>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-bold text-emerald-500">92%</span>
+                  <span class="text-xs font-medium text-slate-400">more efficient</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Tokens/sec</span>
+                    <span class="font-bold">1.2k</span>
+                  </div>
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full w-[95%]"></div>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Est. Cost/1M tokens</span>
+                    <span class="font-bold text-emerald-500">$0.07</span>
+                  </div>
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full w-[5%]"></div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed italic">Ideal for: High-volume simple routing, classification, and summarization.</p>
+            </div>
+            <!-- Balanced Tier -->
+            <div id="card-medium" class="bento-card rounded-xl p-6 flex flex-col gap-6 relative overflow-hidden">
+              <div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -z-10"></div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Gemini 1.5 Pro</h3>
+                  <p class="text-xl font-bold">Balanced</p>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-widest">selected: <span id="count-medium">0</span></p>
+                </div>
+                <div class="p-2 bg-primary/20 text-primary rounded-lg border border-primary/20">
+                  <span class="material-symbols-outlined">balance</span>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-bold text-primary">54%</span>
+                  <span class="text-xs font-medium text-slate-400">more efficient</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Tokens/sec</span>
+                    <span class="font-bold">640</span>
+                  </div>
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-primary h-full w-[60%]"></div>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Est. Cost/1M tokens</span>
+                    <span class="font-bold text-primary">$1.25</span>
+                  </div>
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-primary h-full w-[40%]"></div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed italic">Ideal for: Complex reasoning, large context windows, and code generation.</p>
+            </div>
+            <!-- Advanced Tier -->
+            <div id="card-complex" class="bento-card rounded-xl p-6 flex flex-col gap-6">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Gemini 1.0 Ultra</h3>
+                  <p class="text-xl font-bold">Advanced</p>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-widest">selected: <span id="count-complex">0</span></p>
+                </div>
+                <div class="p-2 bg-purple-500/20 text-purple-500 rounded-lg border border-purple-500/20">
+                  <span class="material-symbols-outlined">psychology</span>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-4xl font-bold text-purple-500">12%</span>
+                  <span class="text-xs font-medium text-slate-400">more efficient</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Tokens/sec</span>
+                    <span class="font-bold">120</span>
+                  </div>
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-purple-500 h-full w-[15%]"></div>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="flex justify-between text-xs">
+                    <span class="text-slate-400">Est. Cost/1M tokens</span>
+                    <span class="font-bold text-purple-500">$5.00</span>
+                  </div>
+                  <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="bg-purple-500 h-full w-[90%]"></div>
+                  </div>
+                </div>
+              </div>
+              <p class="text-xs text-slate-500 leading-relaxed italic">Ideal for: Nuanced creative writing, multi-step planning, and complex extraction.</p>
+            </div>
+          </section>
+
+          <!-- Cost Benefit Visualizer -->
+          <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bento-card rounded-xl p-8">
+              <div class="flex items-center justify-between mb-8">
+                <h2 class="text-lg font-bold">Performance-to-Cost Efficiency Curve</h2>
+                <div class="flex gap-4">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-primary"></div>
+                    <span class="text-xs text-slate-400">Optimized Routing</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-slate-600"></div>
+                    <span class="text-xs text-slate-400">Baseline (Pro Only)</span>
+                  </div>
+                </div>
+              </div>
+              <div class="h-64 flex items-end gap-1 px-2 border-l border-b border-primary/20">
+                <!-- Mini bar chart visualization -->
+                <div class="flex-1 bg-primary/10 h-[20%] rounded-t relative group">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">20%</div>
+                </div>
+                <div class="flex-1 bg-primary/20 h-[35%] rounded-t relative group">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">35%</div>
+                </div>
+                <div class="flex-1 bg-primary/30 h-[55%] rounded-t relative group">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">55%</div>
+                </div>
+                <div class="flex-1 bg-primary/40 h-[75%] rounded-t relative group border-t-2 border-primary">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">75%</div>
+                </div>
+                <div class="flex-1 bg-primary/50 h-[90%] rounded-t relative group border-t-2 border-primary">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">90%</div>
+                </div>
+                <div class="flex-1 bg-primary/60 h-[85%] rounded-t relative group border-t-2 border-primary">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">85%</div>
+                </div>
+                <div class="flex-1 bg-primary/70 h-[95%] rounded-t relative group border-t-2 border-primary">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">95%</div>
+                </div>
+                <div class="flex-1 bg-primary/80 h-[80%] rounded-t relative group border-t-2 border-primary">
+                  <div class="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block text-[10px] font-bold">80%</div>
+                </div>
+              </div>
+              <div class="flex justify-between mt-4 px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                <span>Request Complexity (Low)</span>
+                <span>Request Complexity (High)</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-6">
+              <div class="bento-card rounded-xl p-6 flex-1">
+                <h3 class="text-sm font-bold mb-4">Selection Summary</h3>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500 text-xs">Simple selected</span>
+                    <span id="sum-simple" class="text-primary font-bold">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500 text-xs">Medium selected</span>
+                    <span id="sum-medium" class="text-primary font-bold">0</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500 text-xs">Complex selected</span>
+                    <span id="sum-complex" class="text-primary font-bold">0</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-primary rounded-xl p-6 text-white shadow-lg shadow-primary/20">
+                <h3 class="text-sm font-bold mb-2">Estimated Savings</h3>
+                <p class="text-3xl font-bold mb-4" id="savings_total">0%</p>
+                <div class="bg-white/10 rounded p-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">trending_up</span>
+                  <span class="text-xs font-medium">vs complex baseline</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const setStatus = (t) => { $("status").textContent = t; };
+
+      const tierCards = {
+        simple: $("card-simple"),
+        medium: $("card-medium"),
+        complex: $("card-complex"),
+      };
+
+      const tierCounts = {
+        simple: 0,
+        medium: 0,
+        complex: 0,
+      };
+
+      function selectTier(tier) {
+        Object.values(tierCards).forEach((el) => el.classList.remove("selected"));
+        const card = tierCards[tier];
+        if (card) card.classList.add("selected");
+      }
+
+      function bumpCount(tier) {
+        if (!(tier in tierCounts)) return;
+        tierCounts[tier] += 1;
+        $("count-" + tier).textContent = tierCounts[tier];
+        $("sum-" + tier).textContent = tierCounts[tier];
+      }
+
+      function formatNum(n) {
+        if (n === null || n === undefined) return "-";
+        if (Number.isFinite(n)) return n.toString();
+        return String(n);
+      }
+
+      function toPct(value, maxValue) {
+        if (!Number.isFinite(value) || !Number.isFinite(maxValue) || maxValue <= 0) return 0;
+        return Math.max(0, Math.min(100, Math.round((value / maxValue) * 100)));
+      }
+
+      $("send").addEventListener("click", async () => {
+        const prompt = $("prompt").value.trim();
+        if (!prompt) return;
+        $("send").disabled = true;
+        setStatus("sending...");
+        $("output").textContent = "";
+
+        const payload = {
+          user_id: $("user_id").value || "u1",
+          text: prompt,
+          metadata: {},
+        };
+        const reqId = $("req_id").value.trim();
+        if (reqId) payload.metadata.request_id = reqId;
+
+        try {
+          const res = await fetch("/route", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || "error");
+
+          const tier = data.routing?.tier;
+          const modelUsed = data.routing?.model_used;
+          const usage = data.response?.usage || {};
+
+          $("output").textContent = data.response?.text || "(no text)";
+          $("model").textContent = "model: " + (modelUsed ?? "-");
+          const agentLabel = tier && modelUsed ? tier + " / " + modelUsed : (tier || "-");
+          $("agent_badge").textContent = agentLabel;
+          $("tier").textContent = tier || "-";
+          $("model_used").textContent = modelUsed || "-";
+
+          const tokensIn = Number(usage.input_tokens ?? NaN);
+          const tokensOut = Number(usage.output_tokens ?? NaN);
+          const tokensTotal = Number(usage.total_tokens ?? NaN);
+          const tokensEst = Number(data.routing?.tokens_est ?? NaN);
+          const costEst = Number(data.routing?.cost_est_usd ?? NaN);
+          const latencyMs = Number(data.routing?.latency_ms ?? NaN);
+          const clsMs = Number(data.routing?.breakdown_ms?.classifier ?? NaN);
+          const llmMs = Number(data.routing?.breakdown_ms?.llm ?? NaN);
+          const tokensPerSec = Number.isFinite(tokensOut) && Number.isFinite(llmMs) && llmMs > 0
+            ? Number((tokensOut / (llmMs / 1000)).toFixed(2))
+            : NaN;
+
+          $("tokens_in").textContent = formatNum(usage.input_tokens);
+          $("tokens_out").textContent = formatNum(usage.output_tokens);
+          $("tokens_total").textContent = formatNum(usage.total_tokens);
+          $("tokens_est").textContent = formatNum(data.routing?.tokens_est);
+          $("tokens_per_sec").textContent = Number.isFinite(tokensPerSec) ? tokensPerSec : "-";
+          $("latency_ms").textContent = formatNum(data.routing?.latency_ms);
+          $("classifier_ms").textContent = formatNum(data.routing?.breakdown_ms?.classifier);
+          $("llm_ms").textContent = formatNum(data.routing?.breakdown_ms?.llm);
+          $("cost").textContent = formatNum(data.routing?.cost_est_usd);
+
+          $("reason").textContent = "reason: " + (data.routing?.reason ?? "-");
+
+          const maxTokens = Math.max(
+            1,
+            ...[tokensIn, tokensOut, tokensTotal, tokensEst].filter(Number.isFinite)
+          );
+          const maxCost = Math.max(1, Number.isFinite(costEst) ? costEst : 1);
+          const maxLatency = Math.max(1, ...[latencyMs, clsMs, llmMs].filter(Number.isFinite));
+          const maxTps = Math.max(1, Number.isFinite(tokensPerSec) ? tokensPerSec : 1);
+
+          $("bar_tokens_in").style.width = toPct(tokensIn, maxTokens) + "%";
+          $("bar_tokens_out").style.width = toPct(tokensOut, maxTokens) + "%";
+          $("bar_tokens_total").style.width = toPct(tokensTotal, maxTokens) + "%";
+          $("bar_tokens_est").style.width = toPct(tokensEst, maxTokens) + "%";
+          $("bar_tokens_per_sec").style.width = toPct(tokensPerSec, maxTps) + "%";
+          $("bar_latency").style.width = toPct(latencyMs, maxLatency) + "%";
+          $("bar_classifier").style.width = toPct(clsMs, maxLatency) + "%";
+          $("bar_llm").style.width = toPct(llmMs, maxLatency) + "%";
+          $("bar_cost").style.width = toPct(costEst, maxCost) + "%";
+
+          if (tier) {
+            selectTier(tier);
+            bumpCount(tier);
+          }
+
+          setStatus("ok");
+        } catch (err) {
+          $("output").textContent = String(err);
+          setStatus("error");
+        } finally {
+          $("send").disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

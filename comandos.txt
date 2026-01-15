@@ -1,0 +1,51 @@
+curl -X POST "https://llm-router-4o6o6bmqha-uc.a.run.app/route" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id":"u1",
+    "text":"Define qué es una API de forma clara y sencilla, incluyendo una analogía cotidiana y un ejemplo práctico de uso en aplicaciones modernas."
+  }'
+
+
+curl -X POST "https://llm-router-4o6o6bmqha-uc.a.run.app/route" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id":"u1",
+    "text":"Explica cómo funcionan los sistemas de recomendación basados en historial y preferencias del usuario, describiendo los pasos fundamentales, cómo se recopilan los datos y cómo se generan recomendaciones personalizadas."
+  }'
+
+
+curl -X POST "https://llm-router-4o6o6bmqha-uc.a.run.app/route" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id":"u1",
+    "text":"Diseña una arquitectura serverless completa para un sistema LLM multimodelo que incluya autoscaling dinámico, distribución inteligente de carga, separación por servicios, manejo de modelos distribuidos y un módulo de optimización de costos. Explica brevemente el flujo de datos y las decisiones clave del diseño."
+  }'
+
+
+
+gcloud builds submit --tag us-central1-docker.pkg.dev/llm-router-project-479922/llm-router-repo/llm-classifier
+
+
+gcloud builds submit --tag us-central1-docker.pkg.dev/llm-router-project-479922/llm-router-repo/llm-router
+
+
+
+  gcloud run deploy llm-router \
+  --image us-central1-docker.pkg.dev/llm-router-project-479922/llm-router-repo/llm-router \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars CLASSIFIER_URL=https://llm-classifier-911161541488.us-central1.run.app/predict \
+  --set-env-vars GEMINI_API_KEY="AIzaSyCmdcZVtefIE7do22XHSy4I4OYdX8VAOyU"
+
+
+gcloud run services list
+
+
+gcloud logging read \
+ 'resource.type="cloud_run_revision" AND resource.labels.service_name="llm-router"' \
+ --limit 50 \
+ --format="value(textPayload)"
+
+
+watch gcloud run services describe llm-router --region us-central1

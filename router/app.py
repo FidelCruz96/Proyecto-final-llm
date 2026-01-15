@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 import asyncio
 import httpx
 from fastapi import FastAPI, HTTPException, Response, Request
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 # ---------------------------
@@ -41,6 +42,8 @@ except json.JSONDecodeError:
 # FastAPI
 # ---------------------------
 app = FastAPI(title="LLM Multi-Model Router", version="1.0.0")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/ui", StaticFiles(directory=STATIC_DIR, html=True), name="ui")
 
 # ---------------------------
 # Structured logging (Cloud Run friendly)
