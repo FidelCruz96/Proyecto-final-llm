@@ -36,7 +36,7 @@ gcloud builds submit --tag us-central1-docker.pkg.dev/llm-router-project-479922/
   --region us-central1 \
   --allow-unauthenticated \
   --set-env-vars CLASSIFIER_URL=https://llm-classifier-911161541488.us-central1.run.app/predict \
-  --set-env-vars GEMINI_API_KEY="AIzaSyCmdcZVtefIE7do22XHSy4I4OYdX8VAOyU"
+  --set-env-vars GEMINI_API_KEY="API_KEY"
 
 
 gcloud run services list
